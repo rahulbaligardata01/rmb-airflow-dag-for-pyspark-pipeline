@@ -1,0 +1,8 @@
+{"event_id":"E015","user_id":"U005","event_timestamp":"2026-01-03 11:03:00","event_type":"page_view","page":"products","device":"tablet","country":"US"}
+{"event_id":"E016","user_id":"U005","event_timestamp":"2026-01-03 11:06:00","event_type":"purchase","page":"checkout","device":"tablet","country":"US"}
+{"event_id":"E017","user_id":"U006","event_timestamp":"2026-01-03 12:00:00","event_type":"page_view","page":"home","device":"mobile","country":"IN"}
+{"event_id":"E018","user_id":"U006","event_timestamp":"2026-01-03 12:04:00","event_type":"page_view","page":"products","device":"mobile","country":"IN"}
+{"event_id":"E019","user_id":"U007","event_timestamp":"2026-01-03 13:00:00","event_type":"page_view","page":"home","device":"desktop","country":"IN"}
+{"event_id":"E020","user_id":"U007","event_timestamp":"2026-01-03 13:02:00","event_type":"page_view","page":"products","device":"desktop","country":"IN"}
+{"event_id":"E021","user_id":"U008","event_timestamp":"2026-01-03 14:00:00","event_type":"page_view","page":"home","device":"mobile","country":"UK"}
+{"event_id":"E022","user_id":"U008","event_timestamp":"2026-01-03 14:05:00","event_type":"page_view","page":"products","device":"mobile","country":"UK"}

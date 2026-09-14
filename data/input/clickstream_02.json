@@ -1,0 +1,6 @@
+{"event_id":"E008","user_id":"U003","event_timestamp":"2026-01-02 09:00:00","event_type":"page_view","page":"home","device":"mobile","country":"IN"}
+{"event_id":"E009","user_id":"U003","event_timestamp":"2026-01-02 09:02:00","event_type":"page_view","page":"search","device":"mobile","country":"IN"}
+{"event_id":"E010","user_id":"U003","event_timestamp":"2026-01-02 09:05:00","event_type":"page_view","page":"products","device":"mobile","country":"IN"}
+{"event_id":"E011","user_id":"U003","event_timestamp":"2026-01-02 09:08:00","event_type":"page_view","page":"cart","device":"mobile","country":"IN"}
+{"event_id":"E013","user_id":"U004","event_timestamp":"2026-01-02 10:00:00","event_type":"page_view","page":"home","device":"desktop","country":"IN"}
+{"event_id":"E014","user_id":"U005","event_timestamp":"2026-01-02 11:00:00","event_type":"page_view","page":"home","device":"tablet","country":"US"}
