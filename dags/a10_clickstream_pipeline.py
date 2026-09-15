@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import os
 import subprocess
 
-from airflow.sdk import dag, task
+from airflow.sdk import dag, task, Variable
 from airflow.providers.standard.sensors.filesystem import FileSensor
 
 from airflow.sdk.definitions.deadline import (
@@ -57,9 +57,20 @@ def a10_clickstream_pipeline():
     )
 
     @task
-    def extract():
+    def read_configuration():
+        environment = Variable.get("a10_environment", default="local")
+
+        print(f"Airflow environment: {environment}")
+
+        return environment
+
+    @task
+    def extract(environment):
         input_path = "/opt/airflow/data/input"
+
+        print(f"Environment: {environment}")
         print(f"Extract: reading from {input_path}")
+
         return input_path
 
     @task
@@ -168,7 +179,9 @@ def a10_clickstream_pipeline():
         else:
             raise ValueError("Data quality checks failed")
 
-    input_path = extract()
+    environment = read_configuration()
+
+    input_path = extract(environment)
 
     wait_for_file >> input_path
 
