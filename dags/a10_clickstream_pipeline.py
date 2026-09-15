@@ -41,10 +41,15 @@ def a10_clickstream_pipeline():
                 f"Input directory does not exist: {input_path}"
             )
 
-        return input_path
+        return {
+            "input_path": input_path,
+            "status": "VALID",
+        }
 
     @task
-    def list_input_files(input_path):
+    def list_input_files(validation_metadata):
+        input_path = validation_metadata["input_path"]
+
         files = [
             os.path.join(input_path, filename)
             for filename in os.listdir(input_path)
@@ -57,6 +62,7 @@ def a10_clickstream_pipeline():
             )
 
         print(f"Found {len(files)} input files:")
+
         for file_path in files:
             print(file_path)
 
@@ -68,7 +74,9 @@ def a10_clickstream_pipeline():
         return file_path
 
     @task
-    def transform(input_path, processed_files):
+    def transform(validation_metadata, processed_files):
+        input_path = validation_metadata["input_path"]
+
         print(f"Transform: processing {input_path}")
         print(f"Processed files: {processed_files}")
 
@@ -90,12 +98,43 @@ def a10_clickstream_pipeline():
     @task
     def data_quality(output_path):
         print(f"Data quality: checking {output_path}")
-        return True
+
+        if not os.path.exists(output_path):
+            raise FileNotFoundError(
+                f"Output directory does not exist: {output_path}"
+            )
+
+        parquet_files = []
+
+        for root, _, files in os.walk(output_path):
+            for filename in files:
+                if filename.endswith(".parquet"):
+                    parquet_files.append(
+                        os.path.join(root, filename)
+                    )
+
+        if not parquet_files:
+            raise ValueError(
+                f"No Parquet files found in: {output_path}"
+            )
+
+        print(f"Data quality passed.")
+        print(f"Parquet files found: {len(parquet_files)}")
+
+        return {
+            "status": "PASSED",
+            "output_path": output_path,
+            "parquet_file_count": len(parquet_files),
+        }
 
     @task
-    def notify(dq_passed):
-        if dq_passed:
+    def notify(dq_result):
+        if dq_result["status"] == "PASSED":
             print("Notify: pipeline completed successfully")
+            print(f"Output path: {dq_result['output_path']}")
+            print(
+                f"Parquet files: {dq_result['parquet_file_count']}"
+            )
         else:
             raise ValueError("Data quality checks failed")
 
