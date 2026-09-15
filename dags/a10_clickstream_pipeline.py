@@ -168,11 +168,6 @@ def a10_clickstream_pipeline():
         else:
             raise ValueError("Data quality checks failed")
 
-    @task
-    def test_slack_failure():
-        print("Intentional failure for Slack alert testing")
-        raise ValueError("Intentional failure for Slack alert testing")
-
     input_path = extract()
 
     wait_for_file >> input_path
@@ -186,7 +181,5 @@ def a10_clickstream_pipeline():
     loaded_path = load(output_path)
     dq_result = data_quality(loaded_path)
     notify(dq_result)
-
-    test_slack_failure()
 
 a10_clickstream_pipeline()
