@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 import os
+import subprocess
 
 from airflow.sdk import dag, task
-
+from airflow.providers.standard.sensors.filesystem import FileSensor
 
 @dag(
     dag_id="a10_clickstream_pipeline",
@@ -16,6 +17,14 @@ from airflow.sdk import dag, task
     },
 )
 def a10_clickstream_pipeline():
+
+    wait_for_file = FileSensor(
+        task_id="wait_for_file",
+        filepath="clickstream_01.json",
+        fs_conn_id="fs_default",
+        poke_interval=10,
+        timeout=300,
+    )
 
     @task
     def extract():
@@ -37,9 +46,9 @@ def a10_clickstream_pipeline():
     @task
     def list_input_files(input_path):
         files = [
-            os.path.join(input_path, file)
-            for file in os.listdir(input_path)
-            if file.endswith(".json")
+            os.path.join(input_path, filename)
+            for filename in os.listdir(input_path)
+            if filename.endswith(".json")
         ]
 
         if not files:
@@ -48,8 +57,8 @@ def a10_clickstream_pipeline():
             )
 
         print(f"Found {len(files)} input files:")
-        for file in files:
-            print(file)
+        for file_path in files:
+            print(file_path)
 
         return files
 
@@ -59,8 +68,18 @@ def a10_clickstream_pipeline():
         return file_path
 
     @task
-    def transform(input_path):
+    def transform(input_path, processed_files):
         print(f"Transform: processing {input_path}")
+        print(f"Processed files: {processed_files}")
+
+        subprocess.run(
+            [
+                "spark-submit",
+                "/opt/airflow/spark/clickstream_transform.py",
+            ],
+            check=True,
+        )
+
         return "/opt/airflow/data/output"
 
     @task
@@ -81,12 +100,15 @@ def a10_clickstream_pipeline():
             raise ValueError("Data quality checks failed")
 
     input_path = extract()
+
+    wait_for_file >> input_path
+
     validated_path = validate(input_path)
     input_files = list_input_files(validated_path)
 
     processed_files = process_file.expand(file_path=input_files)
 
-    output_path = transform(validated_path)
+    output_path = transform(validated_path, processed_files)
     loaded_path = load(output_path)
     dq_result = data_quality(loaded_path)
     notify(dq_result)
