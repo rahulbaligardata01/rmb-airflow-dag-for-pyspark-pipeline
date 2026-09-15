@@ -5,15 +5,45 @@ import subprocess
 from airflow.sdk import dag, task
 from airflow.providers.standard.sensors.filesystem import FileSensor
 
+from airflow.sdk.definitions.deadline import (
+    DeadlineAlert,
+    DeadlineReference,
+    AsyncCallback,
+)
+
+from airflow.providers.slack.notifications.slack_webhook import SlackWebhookNotifier
+
+slack_failure_notifier = SlackWebhookNotifier(
+    slack_webhook_conn_id="slack_webhook",
+    text=(
+        "A10 Airflow task failed.\n"
+        "DAG: {{ dag.dag_id }}\n"
+        "Task: {{ task.task_id }}\n"
+        "Run: {{ dag_run.run_id }}"
+    ),
+)
+
+async def deadline_callback(context):
+    print("DEADLINE MISSED")
+    print(f"DAG: {context['dag'].dag_id}")
+    print(f"Run ID: {context['dag_run'].run_id}")
+
 @dag(
     dag_id="a10_clickstream_pipeline",
     start_date=datetime(2026, 1, 1),
     schedule=None,
     catchup=False,
     tags=["a10", "clickstream", "pyspark"],
+    deadline=DeadlineAlert(
+        reference=DeadlineReference.DAGRUN_QUEUED_AT,
+        interval=timedelta(seconds=30),
+        callback=AsyncCallback(deadline_callback),
+        name="a10_pipeline_deadline",
+    ),
     default_args={
         "retries": 2,
         "retry_delay": timedelta(minutes=1),
+        "on_failure_callback": slack_failure_notifier,
     },
 )
 def a10_clickstream_pipeline():
@@ -138,6 +168,11 @@ def a10_clickstream_pipeline():
         else:
             raise ValueError("Data quality checks failed")
 
+    @task
+    def test_slack_failure():
+        print("Intentional failure for Slack alert testing")
+        raise ValueError("Intentional failure for Slack alert testing")
+
     input_path = extract()
 
     wait_for_file >> input_path
@@ -152,5 +187,6 @@ def a10_clickstream_pipeline():
     dq_result = data_quality(loaded_path)
     notify(dq_result)
 
+    test_slack_failure()
 
 a10_clickstream_pipeline()
